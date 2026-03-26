@@ -7,6 +7,7 @@
 #include "tf/transform_datatypes.h"//for tf, getYaw
 #include "std_msgs/Float64.h"
 #include "std_msgs/Float64MultiArray.h"
+#include "std_msgs/Float32.h"
 #include "geometry_msgs/PoseStamped.h"
 #include "sensor_msgs/NavSatFix.h"
 #include <GeographicLib/TransverseMercator.hpp>
@@ -21,6 +22,7 @@ class ULConverter{
     void LLAConvert2UTM(Hemi hemi, int zone, double latitude, double longitude, double altitude);
     void PoseCallback(const geometry_msgs::PoseStamped::ConstPtr& msgs);
     void GPSCallback(const sensor_msgs::NavSatFix::ConstPtr& msgs);
+    void HeadingCallback(const std_msgs::Float32::ConstPtr& msgs);
     std::vector<double> get_lla();
   private:
    const double kNN_      = 0;
@@ -32,6 +34,7 @@ class ULConverter{
    double origin_x_   = 0.0;
    double origin_y_   = 0.0;
    double origin_z_   = 0.0;
+   double latest_heading_ = 0.0;
 
    std::vector<double> lla_;
    std::vector<double> utm_;

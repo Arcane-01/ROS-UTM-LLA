@@ -39,6 +39,7 @@ int main(int argc, char **argv)
  
   ros::Subscriber  sub1 = n.subscribe("/utm_pose",1000,&ULConverter::PoseCallback, &con);
   ros::Subscriber  sub2 = n.subscribe("/gps/fix",1000,&ULConverter::GPSCallback, &con);
+  ros::Subscriber  sub3 = n.subscribe("/gps/heading",1000,&ULConverter::HeadingCallback, &con);
 
   ros::spin();
 

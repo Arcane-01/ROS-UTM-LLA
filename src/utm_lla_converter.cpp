@@ -1,4 +1,5 @@
 #include "utm_lla_converter.h"
+#include <tf/transform_broadcaster.h>
 using namespace std;
 
 ULConverter::ULConverter(string hemi, int zone, double at, double fla, double k0):tm_(at,fla,k0),zone_(zone), hemi_(hemi){};
@@ -74,6 +75,24 @@ void ULConverter::GPSCallback(const sensor_msgs::NavSatFix::ConstPtr& msgs)
   local_pose.pose.position.y = utm_[1] - origin_y_;
   local_pose.pose.position.z = utm_[2] - origin_z_;
 
+  tf::Quaternion q;
+  double yaw = latest_heading_ * kPI_ / 180.0;;
+  q.setRPY(0, 0, yaw);
+  local_pose.pose.orientation.x = q.x();
+  local_pose.pose.orientation.y = q.y();
+  local_pose.pose.orientation.z = q.z();
+  local_pose.pose.orientation.w = q.w();
+
+  static tf::TransformBroadcaster br;
+  tf::Transform transform;
+  transform.setOrigin(tf::Vector3(
+      local_pose.pose.position.x,
+      local_pose.pose.position.y,
+      local_pose.pose.position.z));
+  transform.setRotation(q); 
+  br.sendTransform(tf::StampedTransform(
+      transform, msgs->header.stamp, "world", "jackal"));
+
   ROS_DEBUG("Convert to x: [%f]", local_pose.pose.position.x);
   ROS_DEBUG("Convert to y: [%f]", local_pose.pose.position.y);
   ROS_DEBUG("Convert to z: [%f]", local_pose.pose.position.z);
@@ -114,4 +133,10 @@ void ULConverter::LLAConvert2UTM(Hemi hemi, int zone, double latitude, double lo
 std::vector<double> ULConverter::get_lla()
 {
   return lla_;
+}
+
+void ULConverter::HeadingCallback(const std_msgs::Float32::ConstPtr& msgs)
+{
+  latest_heading_ = msgs->data;
+  ROS_DEBUG("Got heading: [%f]", latest_heading_);
 }
