@@ -3,5 +3,6 @@
     <param name="utm_zone" type="int" value="35" />
     <param name="hemisphere" type="string" value="North" />
     <node type="utm_lla_converter" pkg="utm_lla" name="utm_lla_converter" output="screen">
+    <node type="gps_heading_parser.py" pkg="utm_lla" name="gps_heading_parser" output="screen"/>
     </node>
 </launch>
