@@ -3,12 +3,6 @@ using namespace std;
 
 ULConverter::ULConverter(string hemi, int zone, double at, double fla, double k0):tm_(at,fla,k0),zone_(zone), hemi_(hemi){};
 
-struct basic{
-  double bx = 0.0;//-594929.9431329881;//east
-  double by = 0.0;//-4139043.529676078;//north
-  double bz = 0.0;//unit in m
-};//origin point
-
 void ULConverter::RegiHandle(ros::NodeHandle &n)
 {
   gps_pub_ = n.advertise<sensor_msgs::NavSatFix>("/gps",10);
@@ -17,14 +11,13 @@ void ULConverter::RegiHandle(ros::NodeHandle &n)
 
 void ULConverter::PoseCallback(const geometry_msgs::PoseStamped::ConstPtr& msgs)
 { 
-  basic bs;
   sensor_msgs::NavSatFix gps;
   gps.header = msgs->header;
 
   //position from NDT
-  double px = -bs.bx + msgs->pose.position.x ;
-  double py = -bs.by + msgs->pose.position.y ;
-  double pz = -bs.bz + msgs->pose.position.z;//height not change, just output unit in meters
+  double px = msgs->pose.position.x ;
+  double py = msgs->pose.position.y ;
+  double pz = msgs->pose.position.z ;//height not change, just output unit in meters
   ROS_DEBUG("Get data x: [%f]", px);
   ROS_DEBUG("Get data y: [%f]", py);
   ROS_DEBUG("Get data z: [%f]", pz);
@@ -42,7 +35,7 @@ void ULConverter::PoseCallback(const geometry_msgs::PoseStamped::ConstPtr& msgs)
   gps.longitude = lla_[1];
   gps.altitude  = lla_[2];
   
-  ROS_DEBUG("Convert to lagitude: [%f]", lla_[0]);
+  ROS_DEBUG("Convert to latitude: [%f]", lla_[0]);
   ROS_DEBUG("Convert to longitude: [%f]", lla_[1]);
   ROS_DEBUG("Convert to altitude: [%f]", lla_[2]);
   
@@ -52,8 +45,7 @@ void ULConverter::PoseCallback(const geometry_msgs::PoseStamped::ConstPtr& msgs)
 
 void ULConverter::GPSCallback(const sensor_msgs::NavSatFix::ConstPtr& msgs)
 {
-  basic bs;
-  ROS_DEBUG("Get data lagitude from GPS: [%f]", msgs->latitude);
+  ROS_DEBUG("Get data latitude from GPS: [%f]", msgs->latitude);
   ROS_DEBUG("Get data longitude from GPS: [%f]", msgs->longitude);
   ROS_DEBUG("Get data altitude from GPS: [%f]", msgs->altitude);
 
@@ -66,12 +58,21 @@ void ULConverter::GPSCallback(const sensor_msgs::NavSatFix::ConstPtr& msgs)
     ros::shutdown();
   }
 
+  if (!origin_set_)
+  {
+    origin_x_ = utm_[0];
+    origin_y_ = utm_[1];
+    origin_z_ = utm_[2];
+    origin_set_ = true;
+    ROS_INFO("Origin set to UTM: [%f, %f, %f]", origin_x_, origin_y_, origin_z_);
+  }
+
   geometry_msgs::PoseStamped local_pose;
 
   local_pose.header = msgs->header;
-  local_pose.pose.position.x = utm_[0] + bs.bx;
-  local_pose.pose.position.y = utm_[1] + bs.by;
-  local_pose.pose.position.z = utm_[2] + bs.bz;
+  local_pose.pose.position.x = utm_[0] - origin_x_;
+  local_pose.pose.position.y = utm_[1] - origin_y_;
+  local_pose.pose.position.z = utm_[2] - origin_z_;
 
   ROS_DEBUG("Convert to x: [%f]", local_pose.pose.position.x);
   ROS_DEBUG("Convert to y: [%f]", local_pose.pose.position.y);

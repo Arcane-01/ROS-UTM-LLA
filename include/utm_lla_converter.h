@@ -28,6 +28,10 @@ class ULConverter{
    const double kE0_      = 500000.0;
    const double kPI_      = 3.14159265359;
    const double kDist_    = 1.2;
+   bool   origin_set_ = false;
+   double origin_x_   = 0.0;
+   double origin_y_   = 0.0;
+   double origin_z_   = 0.0;
 
    std::vector<double> lla_;
    std::vector<double> utm_;
